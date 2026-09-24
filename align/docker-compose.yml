@@ -1,0 +1,43 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: align-postgres
+
+    environment:
+      POSTGRES_DB: align
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+
+
+    volumes:
+      - align-postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d align"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  api:
+    build: .
+    container_name: align-api
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/align
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+
+      JWT_SECRET: align-docker-development-secret-key-2026-secure
+
+    ports:
+      - "8080:8080"
+
+
+volumes:
+  align-postgres-data:
