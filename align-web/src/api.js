@@ -13,12 +13,13 @@ async function request(path, options = {}) {
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
   const response = await fetch(`${API_URL}${path}`, { ...options, headers })
-  if (response.status === 401 || response.status === 403) {
-    if (token) window.dispatchEvent(new Event('align:unauthorized'))
+  if (response.status === 401 && token && !path.startsWith('/auth/')) {
+    window.dispatchEvent(new Event('align:unauthorized'))
   }
   if (!response.ok) {
     let message = 'Não foi possível concluir a ação.'
     try { const body = await response.json(); message = body.message || body.error || message } catch { /* sem corpo */ }
+    if (response.status === 403) message = 'Você não tem permissão para esta ação. Confira se a meta pertence à sua conta.'
     throw new Error(message)
   }
   if (response.status === 204) return null
